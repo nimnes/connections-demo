@@ -2,9 +2,9 @@ import React, { PropTypes } from 'react'
 
 const ToolButton = ({ title, onToolButtonClick }) => (
     <li className="tool-button-item">
-        <button onClick={onToolButtonClick} className="tool-button">
+        <div onClick={onToolButtonClick} className="tool-button">
             {title}
-        </button>
+        </div>
     </li>
 );
 

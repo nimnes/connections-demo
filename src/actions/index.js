@@ -1,27 +1,34 @@
-let nextComponentId = 0;
+let nextComponentId = 1;
 
-const maxX = 1100;
-const maxY = 500;
-const randomX = () => Math.random() * (maxX - 100) + 100;
-const randomY = () => Math.random() * (maxY - 100) + 100;
+const defaultSize = 100;
+const randomPoint = (maxValue) => Math.random() * (maxValue - defaultSize);
+const uniqueId = () => "component-" + nextComponentId++;
 
-export const addRectangle = () => ({
+export const addRectangle = (canvasSize) => ({
     type: 'ADD_RECTANGLE',
-    id: 'rectangle-' + nextComponentId++,
-    x: randomX(),
-    y: randomY(),
-    width: 100,
-    height: 100
+    id: uniqueId(),
+    x: randomPoint(canvasSize.width),
+    y: randomPoint(canvasSize.height),
+    width: defaultSize,
+    height: defaultSize
 });
 
-export const addEllipse = () => ({
+export const addEllipse = (canvasSize) => ({
     type: 'ADD_ELLIPSE',
-    id: 'ellipse-' + nextComponentId++,
-    x: randomX(),
-    y: randomY(),
-    width: 100,
-    height: 100
+    id: uniqueId(),
+    x: randomPoint(canvasSize.width),
+    y: randomPoint(canvasSize.height),
+    width: defaultSize,
+    height: defaultSize
 });
+
+export const resizeComponent = (id, bounds) => {
+    return {
+        type: 'RESIZE_COMPONENT',
+        id,
+        bounds
+    };
+};
 
 export const selectComponent = (id) => {
     return {

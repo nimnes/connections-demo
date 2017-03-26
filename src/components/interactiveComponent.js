@@ -6,7 +6,6 @@ const interactiveComponent = (WrappedComponent) => {
     return class extends React.Component {
 
         componentDidMount() {
-            console.log(this.component);
             const mouseDown$ = Rx.Observable.fromEvent(this.component.refs.component, "mousedown");
             const mouseMove$ = Rx.Observable.fromEvent($(document), "mousemove");
             const mouseUp$ = Rx.Observable.fromEvent($(document), "mouseup");

@@ -1,15 +1,21 @@
-import React, { PropTypes } from 'react'
-import ToolButton from './ToolButton'
+import React, { PropTypes } from 'react';
+import ToolButton from './ToolButton';
+import $ from 'jquery';
 
 const ToolBar = ({ addEllipse, addRectangle }) => {
+    const canvasSize = () => ({
+        width: $(".canvas").width(),
+        height: $(".canvas").height()
+    });
+
     return (
         <ul className="tool-bar">
             <ToolButton
                 title='Add ellipse'
-                onToolButtonClick={() => addEllipse()} />
+                onToolButtonClick={() => addEllipse(canvasSize())} />
             <ToolButton
                 title='Add rectangle'
-                onToolButtonClick={() => addRectangle()} />
+                onToolButtonClick={() => addRectangle(canvasSize())} />
         </ul>
     );
 }

@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react';
 import BoundsHandle from './BoundsHandle';
 
-const handleDefs = [
+const anchors = [
     ['minX', 'minY'],
     ['minX', 'midY'],
     ['minX', 'maxY'],
@@ -23,23 +23,36 @@ const getBounds = (component) => {
     };
 }
 
-const createHandles = (bounds) => {
-    return handleDefs
-        .reduce((handles, handleDef, index) => {
+const createHandles = (bounds, updateBounds) => {
+    return anchors
+        .reduce((handles, anchor, index) => {
             const handle = (
                 <BoundsHandle
-                    x={bounds[handleDef[0]]}
-                    y={bounds[handleDef[1]]}
+                    x={bounds[anchor[0]]}
+                    y={bounds[anchor[1]]}
                     key={"bounds-handle-" + index}
+                    onHandleMove={(dx, dy) => updateBounds(anchor, dx, dy)}
                 />
             );
             return handles.concat(handle);
         }, []);
 }
 
-const Bounds = ({ component }) => {
+const Bounds = ({ component, onResize }) => {
     const { x, y, width, height } = component;
-    const handles = createHandles(getBounds(component));
+    const bounds = getBounds(component);
+
+    const updateBounds = (anchor, dx, dy) => {
+        const updatedBounds = {
+            ...bounds,
+            [anchor[0]]: bounds[anchor[0]] + dx,
+            [anchor[1]]: bounds[anchor[1]] + dy
+        };
+
+        onResize(updatedBounds);
+    };
+
+    const handles = createHandles(bounds, updateBounds);
     return (
         <g>
             <rect
@@ -58,7 +71,8 @@ const Bounds = ({ component }) => {
 };
 
 Bounds.propTypes = {
-    component: PropTypes.object.isRequired
+    component: PropTypes.object.isRequired,
+    onResize: PropTypes.func
 };
 
 export default Bounds;

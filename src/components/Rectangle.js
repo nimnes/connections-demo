@@ -3,7 +3,7 @@ import React, { PropTypes } from 'react';
 class Rectangle extends React.Component {
 
     render() {
-        const { x, y, width, height, onComponentClick } = this.props;
+        const { x, y, width, height, onComponentMouseDown } = this.props;
         return (
             <rect
                 ref='component'
@@ -11,9 +11,9 @@ class Rectangle extends React.Component {
                 y={y}
                 width={width}
                 height={height}
-                fill='#55aa55'
+                fill='#84c68c'
                 opacity='0.8'
-                onClick={onComponentClick}
+                onMouseDown={onComponentMouseDown}
             />
         );
     }
@@ -24,7 +24,7 @@ Rectangle.propTypes = {
     y: PropTypes.number,
     width: PropTypes.number,
     height: PropTypes.number,
-    onComponentClick: PropTypes.func
+    onComponentMouseDown: PropTypes.func
 };
 
 export default Rectangle;

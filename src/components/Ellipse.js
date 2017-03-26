@@ -3,7 +3,7 @@ import React, { PropTypes } from 'react'
 class Ellipse extends React.Component {
 
     render() {
-        const { x, y, width, height, onComponentClick } = this.props;
+        const { x, y, width, height, onComponentMouseDown } = this.props;
         return (
             <ellipse
                 ref='component'
@@ -11,9 +11,9 @@ class Ellipse extends React.Component {
                 cy={y + height / 2}
                 rx={width / 2}
                 ry={height / 2}
-                fill='#55aa55'
+                fill='#ffd2aa'
                 opacity='0.8'
-                onClick={onComponentClick}
+                onMouseDown={onComponentMouseDown}
             />
         );
     }
@@ -24,7 +24,7 @@ Ellipse.propTypes = {
     y: PropTypes.number,
     width: PropTypes.number,
     height: PropTypes.number,
-    onComponentClick: PropTypes.func
+    onComponentMouseDown: PropTypes.func
 };
 
 export default Ellipse;
