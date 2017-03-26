@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { moveComponent, resizeComponent, selectComponent } from '../actions';
+import { addConnection, moveComponent, removeConnection, resizeComponent, selectComponent } from '../actions';
 import Canvas from '../components/Canvas';
 
 const mapStateToProps = (state) => ({
@@ -9,7 +9,9 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = {
+    addConnection,
     moveComponent,
+    removeConnection,
     resizeComponent,
     selectComponent
 };

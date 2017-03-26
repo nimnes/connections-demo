@@ -61,7 +61,7 @@ const Bounds = ({ component, onResize }) => {
                 width={width}
                 height={height}
                 fill='none'
-                stroke='#004400'
+                stroke='#2c8437'
                 strokeDasharray='3 3'
                 pointerEvents='none'
             />

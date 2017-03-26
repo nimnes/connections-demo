@@ -41,7 +41,7 @@ class BoundsHandle extends React.Component {
                 width={handleSize}
                 height={handleSize}
                 fill='#daf0dd'
-                stroke='#004400'
+                stroke='#2c8437'
                 style={{ cursor: 'pointer' }}
                 onClick={(e) => e.stopPropagation()}
             />
