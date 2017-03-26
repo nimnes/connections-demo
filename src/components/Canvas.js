@@ -88,9 +88,9 @@ class Canvas extends React.Component {
             const sy = (mousePosition.y - component.y) / component.height;
 
             this.props.addConnection(component.id, sx, sy);
+        } else {
+            this.props.selectComponent(component.id);
         }
-
-        this.props.selectComponent(component.id);
     }
 }
 
