@@ -84,6 +84,7 @@ class Canvas extends React.Component {
 
     _createPipeEndHandle(anchor, component) {
         const movePipeEnd = R.curryN(4, this.props.movePipeEnd)(component.id);
+
         return (
             <PipeEndHandle
                 anchor={anchor}

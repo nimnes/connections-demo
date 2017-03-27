@@ -2,7 +2,7 @@ import React, { PropTypes } from 'react';
 import Rx from 'rxjs';
 import $ from 'jquery';
 
-const handleSize = 6;
+const handleSize = 8;
 const { fromEvent } = Rx.Observable;
 
 class PipeEndHandle extends React.Component {
@@ -27,8 +27,8 @@ class PipeEndHandle extends React.Component {
                     .takeUntil(mouseUp$))
             .map(offset => () => this.props.onHandleMove(offset.x, offset.y));
 
-        const startConnecting$ = mouseDown$.mapTo(this.props.startConnecting);
-        const stopConnecting$ = mouseUp$.mapTo(this.props.stopConnecting);
+        const startConnecting$ = mouseDown$.map(() => () => this.props.startConnecting(this.props.component.id));
+        const stopConnecting$ = mouseUp$.map(() => () => this.props.stopConnecting(this.props.component.id));
 
         this.subscription = Rx.Observable.merge(moveHandle$, startConnecting$, stopConnecting$)
             .do(action => action())
@@ -51,8 +51,8 @@ class PipeEndHandle extends React.Component {
                 y={position.y - handleSize / 2}
                 width={handleSize}
                 height={handleSize}
-                fill='#daf0dd'
-                stroke='#2c8437'
+                fill={anchor === 'start' ? '#daf0dd' : '#ffe9e8'}
+                stroke={anchor === 'start' ? '#2c8437' : '#aa3e39'}
                 style={{ cursor: 'pointer' }}
                 onClick={(e) => e.stopPropagation()}
             />

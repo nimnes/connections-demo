@@ -15,10 +15,9 @@ class Pipe extends React.Component {
             <path
                 ref='component'
                 d={createPath(points)}
-                stroke='#236267'
-                opacity='0.8'
+                stroke='rgba(104, 151, 155, 0.8)'
                 fill='none'
-                strokeWidth='4'
+                strokeWidth='5'
                 onMouseDown={this.props.onComponentMouseDown}
             />
         );

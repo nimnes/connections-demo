@@ -90,10 +90,12 @@ export const movePipeEnd = (id, anchor, offsetX, offsetY) => ({
     offsetY
 });
 
-export const startConnecting = () => ({
-    type: 'START_CONNECTING'
+export const startConnecting = (id) => ({
+    type: 'START_CONNECTING',
+    id
 });
 
-export const stopConnecting = () => ({
-    type: 'STOP_CONNECTING'
+export const stopConnecting = (id) => ({
+    type: 'STOP_CONNECTING',
+    id
 });

@@ -1,5 +1,12 @@
 import R from 'ramda';
 
+const componentsLens = R.lensProp('components');
+const connectableLens = R.lensProp('connectable');
+
+const addComponent = (state, component) => {
+    return R.over(componentsLens, R.append(component), state);
+}
+
 const rectangle = (action) => {
     const { id, x, y, width, height } = action;
     return {
@@ -104,35 +111,36 @@ const resizeComponent = (state, action) => {
     return state;
 }
 
-const components = (state = [], action) => {
+const updateConnectable = (state, action) => {
+    const connectable = R.compose(
+        R.pluck('id'),
+        R.filter(c => c.id !== action.id),
+        R.view(componentsLens)
+    )(state);
+    return R.set(connectableLens, connectable, state);
+}
+
+const canvas = (state = { components: [], connectable: [] }, action) => {
     switch (action.type) {
         case 'ADD_RECTANGLE':
-            return [
-                ...state,
-                rectangle(action)
-            ];
+            return addComponent(state, rectangle(action));
         case 'ADD_ELLIPSE':
-            return [
-                ...state,
-                ellipse(action)
-            ];
+            return addComponent(state, ellipse(action));
         case 'ADD_PIPE':
-            return [
-                ...state,
-                pipe(action)
-            ];
+            return addComponent(state, pipe(action));
         case 'MOVE_COMPONENT':
-            return state.map(c =>
-                moveComponent(c, action));
+            return R.over(componentsLens, R.map(c => moveComponent(c, action)), state);
         case 'MOVE_PIPE_END':
-            return state.map(c =>
-                movePipeEnd(c, action));
+            return R.over(componentsLens, R.map(c => movePipeEnd(c, action)), state);
         case 'RESIZE_COMPONENT':
-            return state.map(c =>
-                resizeComponent(c, action));
+            return R.over(componentsLens, R.map(c => resizeComponent(c, action)), state);
+        case 'START_CONNECTING':
+            return updateConnectable(state, action);
+        case 'STOP_CONNECTING':
+            return R.set(connectableLens, [], state);
         default:
             return state;
     }
 }
 
-export default components;
+export default canvas;
