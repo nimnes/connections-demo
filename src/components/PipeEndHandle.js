@@ -3,26 +3,27 @@ import Rx from 'rxjs';
 import $ from 'jquery';
 
 const handleSize = 6;
+const { fromEvent } = Rx.Observable;
 
 class PipeEndHandle extends React.Component {
 
     componentDidMount() {
-        const mouseDown$ = Rx.Observable.fromEvent(this.refs.handle, "mousedown");
-        const mouseMove$ = Rx.Observable.fromEvent($(document), "mousemove");
-        const mouseUp$ = Rx.Observable.fromEvent($(document), "mouseup");
+        const mouseDown$ = fromEvent(this.refs.handle, "mousedown");
+        const mouseMove$ = fromEvent($(document), "mousemove").map(e => ({ x: e.pageX, y: e.pageY }));
+        const mouseUp$ = fromEvent($(document), "mouseup");
 
         const moveHandle$ = mouseDown$
             .do(e => e.stopPropagation())
             .switchMap(down =>
                 mouseMove$
-                    .scan((prev, move) => ({
-                        prev: prev.current,
-                        current: { x: move.pageX, y: move.pageY }
-                    }), { current: { x: down.pageX, y: down.pageY }})
-                    .map(({ prev, current }) => ({
-                        x: current.x - prev.x,
-                        y: current.y - prev.y
-                    }))
+                    .scan((prev, position) => ({
+                        offset: {
+                            x: position.x - prev.position.x,
+                            y: position.y - prev.position.y
+                        },
+                        position
+                    }), { position: { x: down.pageX, y: down.pageY }})
+                    .map(state => state.offset)
                     .takeUntil(mouseUp$))
             .map(offset => () => this.props.onHandleMove(offset.x, offset.y));
 

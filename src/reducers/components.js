@@ -57,13 +57,29 @@ const movePipeEnd = (state, action) => {
         return state;
     }
 
-    const updatePoint = (point) => ({
-        x: point.x + action.offsetX,
-        y: point.y + action.offsetY
-    });
+    const { anchor, offsetX, offsetY } = action;
+    const movePoint = R.curry((dx, dy, point) => ({
+        x: point.x + dx,
+        y: point.y + dy
+    }));
 
-    let index = action.anchor === 'start' ? 0 : state.points.length - 1;
-    return R.over(R.lensPath(['points', index]), updatePoint, state);
+    const startIndex = anchor === 'start' ? 0 : state.points.length - 1;
+    const endIndex = anchor === 'start' ? 1 : startIndex - 1;
+    const startLens = R.lensPath(['points', startIndex]);
+    const endLens = R.lensPath(['points', endIndex]);
+
+    const p1 = R.view(startLens, state);
+    const p2 = R.view(endLens, state);
+
+    const isVertical = p1.x === p2.x;
+    const endOffsetX = isVertical ? offsetX : 0;
+    const endOffsetY = isVertical ? 0 : offsetY;
+
+    const updateSegment = R.compose(
+        R.over(startLens, movePoint(offsetX, offsetY)),
+        R.over(endLens, movePoint(endOffsetX, endOffsetY)));
+
+    return updateSegment(state);
 }
 
 const resizeComponent = (state, action) => {

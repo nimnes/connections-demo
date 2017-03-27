@@ -23,8 +23,7 @@ class Canvas extends React.Component {
         return (
             <svg className="canvas" onMouseDown={() => selectComponent(null)}>
                 {elements}
-                {selectedComponent && selectedComponent.type !== 'pipe' && this._createBounds(selectedComponent)}
-                {selectedComponent && selectedComponent.type === 'pipe' && this._createPipeHandles(selectedComponent)}
+                {selectedComponent && this._createHandles(selectedComponent)}
                 {connectionPoints}
                 <CanvasGrid />
             </svg>
@@ -36,29 +35,6 @@ class Canvas extends React.Component {
             <Bounds
                 component={component}
                 onResize={(bounds) => this.props.resizeComponent(component.id, bounds)} />
-        );
-    }
-
-    _createPipeHandles(component) {
-        return (
-            <g>
-                {this._createPipeEndHandle('start', component)}
-                {this._createPipeEndHandle('end', component)}
-            </g>
-        )
-    }
-
-    _createPipeEndHandle(anchor, component) {
-        const movePipeEnd = R.curryN(4, this.props.movePipeEnd)(component.id);
-        return (
-            <PipeEndHandle
-                anchor={anchor}
-                component={component}
-                key={`pipe-end-${anchor}`}
-                onHandleMove={movePipeEnd(anchor)}
-                startConnecting={this.props.startConnecting}
-                stopConnecting={this.props.stopConnecting}
-            />
         );
     }
 
@@ -99,6 +75,34 @@ class Canvas extends React.Component {
                     />
                 );
             });
+    }
+
+    _createHandles(component) {
+        return component.type === 'pipe' ?
+            this._createPipeHandles(component) : this._createBounds(component);
+    }
+
+    _createPipeEndHandle(anchor, component) {
+        const movePipeEnd = R.curryN(4, this.props.movePipeEnd)(component.id);
+        return (
+            <PipeEndHandle
+                anchor={anchor}
+                component={component}
+                key={`pipe-end-${anchor}`}
+                onHandleMove={movePipeEnd(anchor)}
+                startConnecting={this.props.startConnecting}
+                stopConnecting={this.props.stopConnecting}
+            />
+        );
+    }
+
+    _createPipeHandles(component) {
+        return (
+            <g>
+                {this._createPipeEndHandle('start', component)}
+                {this._createPipeEndHandle('end', component)}
+            </g>
+        )
     }
 
     _findComponent(componentId) {
