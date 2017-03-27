@@ -1,9 +1,10 @@
 import { connect } from 'react-redux';
-import { addEllipse, addRectangle } from '../actions';
+import { addEllipse, addPipe, addRectangle } from '../actions';
 import ToolBar from '../components/ToolBar';
 
 const mapDispatchToProps = {
     addEllipse,
+    addPipe,
     addRectangle
 };
 

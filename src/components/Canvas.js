@@ -1,13 +1,17 @@
+import R from 'ramda';
 import React, { PropTypes } from 'react';
 import Bounds from './Bounds';
 import CanvasGrid from './CanvasGrid';
 import ConnectionPoint from './ConnectionPoint';
 import Ellipse from './Ellipse';
 import Rectangle from './Rectangle';
+import Pipe from './Pipe';
+import PipeEndHandle from './PipeEndHandle';
 import interactiveComponent from './interactiveComponent';
 
 const RectangleComponent = interactiveComponent(Rectangle);
 const EllipseComponent = interactiveComponent(Ellipse);
+const PipeComponent = interactiveComponent(Pipe);
 
 class Canvas extends React.Component {
     render() {
@@ -19,7 +23,8 @@ class Canvas extends React.Component {
         return (
             <svg className="canvas" onMouseDown={() => selectComponent(null)}>
                 {elements}
-                {selectedComponent && this._createBounds(selectedComponent)}
+                {selectedComponent && selectedComponent.type !== 'pipe' && this._createBounds(selectedComponent)}
+                {selectedComponent && selectedComponent.type === 'pipe' && this._createPipeHandles(selectedComponent)}
                 {connectionPoints}
                 <CanvasGrid />
             </svg>
@@ -31,6 +36,29 @@ class Canvas extends React.Component {
             <Bounds
                 component={component}
                 onResize={(bounds) => this.props.resizeComponent(component.id, bounds)} />
+        );
+    }
+
+    _createPipeHandles(component) {
+        return (
+            <g>
+                {this._createPipeEndHandle('start', component)}
+                {this._createPipeEndHandle('end', component)}
+            </g>
+        )
+    }
+
+    _createPipeEndHandle(anchor, component) {
+        const movePipeEnd = R.curryN(4, this.props.movePipeEnd)(component.id);
+        return (
+            <PipeEndHandle
+                anchor={anchor}
+                component={component}
+                key={`pipe-end-${anchor}`}
+                onHandleMove={movePipeEnd(anchor)}
+                startConnecting={this.props.startConnecting}
+                stopConnecting={this.props.stopConnecting}
+            />
         );
     }
 
@@ -47,8 +75,10 @@ class Canvas extends React.Component {
                 return <RectangleComponent {...options} />;
             case "ellipse":
                 return <EllipseComponent {...options} />;
+            case 'pipe':
+                return <PipeComponent {...options} />;
             default:
-                return <div key={component.id} />;
+                return null;
         }
     }
 
@@ -101,7 +131,11 @@ Canvas.propTypes = {
     removeConnection: PropTypes.func,
     resizeComponent:  PropTypes.func,
     selectin:         PropTypes.string,
-    selectComponent:  PropTypes.func
+    selectComponent:  PropTypes.func,
+    setPipeEnd:       PropTypes.func,
+    setPipeStart:     PropTypes.func,
+    startConnecting:  PropTypes.func,
+    stopConnecting:   PropTypes.func
 };
 
 export default Canvas;

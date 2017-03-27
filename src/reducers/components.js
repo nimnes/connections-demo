@@ -1,3 +1,5 @@
+import R from 'ramda';
+
 const rectangle = (action) => {
     const { id, x, y, width, height } = action;
     return {
@@ -22,17 +24,47 @@ const ellipse = (action) => {
     };
 };
 
+const pipe = ({ id, points }) => ({
+    id,
+    type: 'pipe',
+    points
+});
+
 const moveComponent = (state, action) => {
     if (action.type === 'MOVE_COMPONENT' && state.id === action.id) {
-        return {
-            ...state,
-            x: state.x + action.offsetX,
-            y: state.y + action.offsetY
-        };
+        if (state.type === 'pipe') {
+            return {
+                ...state,
+                points: state.points.map(p => ({
+                    x: p.x + action.offsetX,
+                    y: p.y + action.offsetY
+                }))
+            }
+        } else {
+            return {
+                ...state,
+                x: state.x + action.offsetX,
+                y: state.y + action.offsetY
+            };
+        }
     }
 
     return state;
 };
+
+const movePipeEnd = (state, action) => {
+    if (state.id !== action.id) {
+        return state;
+    }
+
+    const updatePoint = (point) => ({
+        x: point.x + action.offsetX,
+        y: point.y + action.offsetY
+    });
+
+    let index = action.anchor === 'start' ? 0 : state.points.length - 1;
+    return R.over(R.lensPath(['points', index]), updatePoint, state);
+}
 
 const resizeComponent = (state, action) => {
     if (action.type === 'RESIZE_COMPONENT' && state.id === action.id) {
@@ -68,9 +100,17 @@ const components = (state = [], action) => {
                 ...state,
                 ellipse(action)
             ];
+        case 'ADD_PIPE':
+            return [
+                ...state,
+                pipe(action)
+            ];
         case 'MOVE_COMPONENT':
             return state.map(c =>
                 moveComponent(c, action));
+        case 'MOVE_PIPE_END':
+            return state.map(c =>
+                movePipeEnd(c, action));
         case 'RESIZE_COMPONENT':
             return state.map(c =>
                 resizeComponent(c, action));

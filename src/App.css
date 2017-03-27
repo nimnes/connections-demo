@@ -4,7 +4,7 @@ html, body, div#root, .main {
 
 .canvas {
     cursor: default;
-    flex: 1;
+    flex: 3;
 }
 
 .canvas-grid {
@@ -23,7 +23,7 @@ html, body, div#root, .main {
 }
 
 .state-editor {
-    width: 300px;
+    flex: 1;
     padding: 5px;
     outline: none;
     background: #fff3e8;

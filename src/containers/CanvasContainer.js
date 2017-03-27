@@ -1,5 +1,14 @@
 import { connect } from 'react-redux';
-import { addConnection, moveComponent, removeConnection, resizeComponent, selectComponent } from '../actions';
+import {
+    addConnection,
+    moveComponent,
+    removeConnection,
+    resizeComponent,
+    selectComponent,
+    startConnecting,
+    stopConnecting,
+    movePipeEnd
+} from '../actions';
 import Canvas from '../components/Canvas';
 
 const mapStateToProps = (state) => ({
@@ -13,7 +22,10 @@ const mapDispatchToProps = {
     moveComponent,
     removeConnection,
     resizeComponent,
-    selectComponent
+    selectComponent,
+    startConnecting,
+    stopConnecting,
+    movePipeEnd
 };
 
 const CanvasContainer = connect(

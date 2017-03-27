@@ -1,11 +1,31 @@
+import R from 'ramda';
+
 let nextComponentId = 1;
 let nextConnectionId = 1;
 
 const defaultSize = 100;
 const randomPoint = (maxValue) => Math.random() * (maxValue - defaultSize);
 
+const randomPoint2 = (canvasSize) => ({
+    x: randomPoint(canvasSize.width),
+    y: randomPoint(canvasSize.height)
+});
+
 const uniqueComponentId = () => "component-" + nextComponentId++;
 const uniqueConnectionId = () => "connection-" + nextConnectionId++;
+
+const generatePipePoints = (canvasSize) => {
+    const generatePoint = (prev, index) => {
+        if (index % 2 === 0) {
+            return Object.assign({}, prev, { x: randomPoint(canvasSize.width) });
+        } else {
+            return Object.assign({}, prev, { y: randomPoint(canvasSize.height )});
+        }
+    };
+
+    const nPoints = Math.random() * 4 + 2;
+    return R.compose(R.scan(generatePoint, randomPoint2(canvasSize)), R.range(0))(nPoints);
+};
 
 export const addEllipse = (canvasSize) => ({
     type: 'ADD_ELLIPSE',
@@ -22,6 +42,12 @@ export const addConnection = (componentId, sx, sy) => ({
     componentId,
     sx,
     sy
+});
+
+export const addPipe = (canvasSize) => ({
+    type: 'ADD_PIPE',
+    id: uniqueComponentId(),
+    points: generatePipePoints(canvasSize)
 });
 
 export const addRectangle = (canvasSize) => ({
@@ -54,4 +80,20 @@ export const resizeComponent = (id, bounds) => ({
 export const selectComponent = (id) => ({
     type: 'SELECT_COMPONENT',
     id
+});
+
+export const movePipeEnd = (id, anchor, offsetX, offsetY) => ({
+    type: 'MOVE_PIPE_END',
+    id,
+    anchor,
+    offsetX,
+    offsetY
+});
+
+export const startConnecting = () => ({
+    type: 'START_CONNECTING'
+});
+
+export const stopConnecting = () => ({
+    type: 'STOP_CONNECTING'
 });
