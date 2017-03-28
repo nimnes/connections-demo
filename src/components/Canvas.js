@@ -25,8 +25,8 @@ class Canvas extends React.Component {
         return (
             <svg className="canvas" onMouseDown={() => selectComponent(null)}>
                 {elements}
-                {connectionPoints}
                 {connectionAreas}
+                {connectionPoints}
                 {selectedComponent && this._createHandles(selectedComponent)}
                 <CanvasGrid />
             </svg>

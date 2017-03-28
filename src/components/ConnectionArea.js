@@ -15,7 +15,7 @@ const createEllipseArea = ({ x, y, width, height }) => (
 const createRectangularArea = ({ x, y, width, height }) => (
     <rect
         fill='none'
-        strokeWidth='1'
+        strokeWidth='2'
         stroke='#aa3e39'
         x={x}
         y={y}

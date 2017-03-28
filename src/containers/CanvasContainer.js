@@ -14,7 +14,7 @@ import Canvas from '../components/Canvas';
 const mapStateToProps = (state) => ({
     components: state.canvas.components,
     connectable: state.canvas.connectable,
-    connections: state.connections,
+    connections: state.canvas.connections,
     selection: state.selection
 });
 
