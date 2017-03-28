@@ -2,6 +2,7 @@ import R from 'ramda';
 import React, { PropTypes } from 'react';
 import Bounds from './Bounds';
 import CanvasGrid from './CanvasGrid';
+import ConnectionArea from './ConnectionArea';
 import ConnectionPoint from './ConnectionPoint';
 import Ellipse from './Ellipse';
 import Rectangle from './Rectangle';
@@ -19,12 +20,14 @@ class Canvas extends React.Component {
         const elements = components.map(c => this._createComponent(c));
         const selectedComponent = this._findComponent(selection);
         const connectionPoints = this._createConnectionPoints();
+        const connectionAreas = this._createConnectionAreas();
 
         return (
             <svg className="canvas" onMouseDown={() => selectComponent(null)}>
                 {elements}
-                {selectedComponent && this._createHandles(selectedComponent)}
                 {connectionPoints}
+                {connectionAreas}
+                {selectedComponent && this._createHandles(selectedComponent)}
                 <CanvasGrid />
             </svg>
         );
@@ -56,6 +59,17 @@ class Canvas extends React.Component {
             default:
                 return null;
         }
+    }
+
+    _createConnectionAreas() {
+        const { connectable } = this.props;
+        return connectable
+            .map(componentId => this._findComponent(componentId))
+            .map(component => (
+                <ConnectionArea
+                    key={`connection-area-${component.id}`}
+                    component={component} />
+            ));
     }
 
     _createConnectionPoints() {

@@ -1,5 +1,7 @@
 import R from 'ramda';
 
+const CONNECTION_RADIUS = 150;
+
 const componentsLens = R.lensProp('components');
 const connectableLens = R.lensProp('connectable');
 
@@ -64,14 +66,11 @@ const movePipeEnd = (state, action) => {
         return state;
     }
 
-    const { anchor, offsetX, offsetY } = action;
-    const movePoint = R.curry((dx, dy, point) => ({
-        x: point.x + dx,
-        y: point.y + dy
-    }));
+    const { anchor, x, y } = action;
 
     const startIndex = anchor === 'start' ? 0 : state.points.length - 1;
     const endIndex = anchor === 'start' ? 1 : startIndex - 1;
+
     const startLens = R.lensPath(['points', startIndex]);
     const endLens = R.lensPath(['points', endIndex]);
 
@@ -79,12 +78,12 @@ const movePipeEnd = (state, action) => {
     const p2 = R.view(endLens, state);
 
     const isVertical = p1.x === p2.x;
-    const endOffsetX = isVertical ? offsetX : 0;
-    const endOffsetY = isVertical ? 0 : offsetY;
+    const endX = isVertical ? x : p2.x;
+    const endY = isVertical ? p2.y : y;
 
     const updateSegment = R.compose(
-        R.over(startLens, movePoint(offsetX, offsetY)),
-        R.over(endLens, movePoint(endOffsetX, endOffsetY)));
+        R.set(startLens, { x, y }),
+        R.set(endLens, { x: endX, y: endY }));
 
     return updateSegment(state);
 }
@@ -112,11 +111,16 @@ const resizeComponent = (state, action) => {
 }
 
 const updateConnectable = (state, action) => {
+    const isClose = (component, action) =>
+        Math.abs(component.x + component.width / 2 - action.x) <= CONNECTION_RADIUS &&
+        Math.abs(component.y + component.height / 2 - action.y) <= CONNECTION_RADIUS;
+
     const connectable = R.compose(
         R.pluck('id'),
-        R.filter(c => c.id !== action.id),
+        R.filter(c => c.id !== action.id && isClose(c, action)),
         R.view(componentsLens)
     )(state);
+
     return R.set(connectableLens, connectable, state);
 }
 
@@ -131,7 +135,8 @@ const canvas = (state = { components: [], connectable: [] }, action) => {
         case 'MOVE_COMPONENT':
             return R.over(componentsLens, R.map(c => moveComponent(c, action)), state);
         case 'MOVE_PIPE_END':
-            return R.over(componentsLens, R.map(c => movePipeEnd(c, action)), state);
+            const newState = R.over(componentsLens, R.map(c => movePipeEnd(c, action)), state);
+            return updateConnectable(newState, action);
         case 'RESIZE_COMPONENT':
             return R.over(componentsLens, R.map(c => resizeComponent(c, action)), state);
         case 'START_CONNECTING':

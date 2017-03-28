@@ -82,17 +82,19 @@ export const selectComponent = (id) => ({
     id
 });
 
-export const movePipeEnd = (id, anchor, offsetX, offsetY) => ({
+export const movePipeEnd = (id, anchor, x, y) => ({
     type: 'MOVE_PIPE_END',
     id,
     anchor,
-    offsetX,
-    offsetY
+    x,
+    y
 });
 
-export const startConnecting = (id) => ({
+export const startConnecting = (id, x, y) => ({
     type: 'START_CONNECTING',
-    id
+    id,
+    x,
+    y
 });
 
 export const stopConnecting = (id) => ({

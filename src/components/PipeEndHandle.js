@@ -8,27 +8,24 @@ const { fromEvent } = Rx.Observable;
 class PipeEndHandle extends React.Component {
 
     componentDidMount() {
+        const { component, onHandleMove, startConnecting, stopConnecting } = this.props;
         const mouseDown$ = fromEvent(this.refs.handle, "mousedown");
-        const mouseMove$ = fromEvent($(document), "mousemove").map(e => ({ x: e.pageX, y: e.pageY }));
+        const mouseMove$ = fromEvent($(document), "mousemove");
         const mouseUp$ = fromEvent($(document), "mouseup");
 
         const moveHandle$ = mouseDown$
             .do(e => e.stopPropagation())
-            .switchMap(down =>
+            .switchMap(downPosition =>
                 mouseMove$
-                    .scan((prev, position) => ({
-                        offset: {
-                            x: position.x - prev.position.x,
-                            y: position.y - prev.position.y
-                        },
-                        position
-                    }), { position: { x: down.pageX, y: down.pageY }})
-                    .map(state => state.offset)
+                    .map(move => ({
+                        x: move.offsetX,
+                        y: move.offsetY
+                    }))
                     .takeUntil(mouseUp$))
-            .map(offset => () => this.props.onHandleMove(offset.x, offset.y));
+            .map(position => () => onHandleMove(position.x, position.y));
 
-        const startConnecting$ = mouseDown$.map(() => () => this.props.startConnecting(this.props.component.id));
-        const stopConnecting$ = mouseUp$.map(() => () => this.props.stopConnecting(this.props.component.id));
+        const startConnecting$ = mouseDown$.map(e => () => startConnecting(component.id, e.offsetX, e.offsetY));
+        const stopConnecting$ = mouseUp$.map(() => () => stopConnecting(component.id));
 
         this.subscription = Rx.Observable.merge(moveHandle$, startConnecting$, stopConnecting$)
             .do(action => action())
