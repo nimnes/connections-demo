@@ -42,14 +42,35 @@ const distanceSq = (p1, p2) => {
 
 const arePointsClose = (p1, p2, maxDistanceSq) => distanceSq(p1, p2) <= maxDistanceSq;
 
+const nearestEllipsePoint = (point, component) => {
+    const a = component.width / 2;
+    const b = component.height / 2;
+    const cx = component.x + a;
+    const cy = component.y + b;
+    const alpha = Math.atan2(point.y - cy, point.x - cx);
+
+    const cos = Math.cos(alpha);
+    const sin = Math.sin(alpha);
+
+    const k = 1 / (Math.sqrt(b * b * Math.pow(cos, 2) + a * a * Math.pow(sin, 2)));
+    return {
+        x: cx + k * a * b * cos,
+        y: cy + k * a * b * sin
+    };
+};
+
 const nearestRectanglePoint = (point, component) => ({
     x: Math.max(component.x, Math.min(point.x, component.x + component.width)),
     y: Math.max(component.y, Math.min(point.y, component.y + component.height))
 });
 
 const nearestComponentPoint = (point, component) => {
-    // @todo: add proper methods for pipes and ellipses
-    return nearestRectanglePoint(point, component);
+    switch (component.type) {
+        case 'ellipse':
+            return nearestEllipsePoint(point, component);
+        default:
+            return nearestRectanglePoint(point, component);
+    }
 }
 
 const createConnection = (connectionPoint, action) => {
