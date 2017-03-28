@@ -112,26 +112,28 @@ const moveComponent = (action, state) => {
         movedPipes);
 };
 
-const resizeComponent = (state, action) => {
-    if (action.type === 'RESIZE_COMPONENT' && state.id === action.id) {
-        const { minX, minY, maxX, maxY } = action.bounds;
-        const width = maxX - minX;
-        const height = maxY - minY;
+const resizeComponent = (action, state) => {
+    const componentLens = R.lensPath(['components', state.components.findIndex(c => c.id === action.id)]);
+    const component = R.view(componentLens)(state);
 
-        if (width < 10 || height < 10) {
-            return state;
-        }
+    const { minX, minY, maxX, maxY } = action.bounds;
+    const width = maxX - minX;
+    const height = maxY - minY;
 
-        return {
-            ...state,
-            x: minX,
-            y: minY,
-            width: maxX - minX,
-            height: maxY - minY
-        };
+    if (width < 10 || height < 10) {
+        return state;
     }
 
-    return state;
+    return R.set(
+        componentLens,
+        {
+            ...component,
+            x: minX,
+            y: minY,
+            width,
+            height
+        },
+        state);
 }
 
 const updateConnectable = R.curry((action, state) => {
@@ -241,7 +243,7 @@ const canvas = (state = { components: [], connectable: [], connections: [] }, ac
         case 'REMOVE_CONNECTION':
             return R.over(connectionsLens, R.filter(c => c.id !== action.id), state);
         case 'RESIZE_COMPONENT':
-            return R.over(componentsLens, R.map(c => resizeComponent(c, action)), state);
+            return resizeComponent(action, state);
         case 'START_CONNECTING':
             return updateConnectable(action, state);
         case 'STOP_CONNECTING':
