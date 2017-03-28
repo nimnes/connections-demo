@@ -2,46 +2,86 @@ import R from 'ramda';
 
 let nextConnectionId = 1;
 
-const CONNECTABLE_AREA_RADIUS = 150;
+const CONNECTABLE_AREA_RADIUS_SQ = 1000;
 const CP_RADIUS_SQ = 100;
 
 const componentsLens = R.lensProp('components');
 const connectableLens = R.lensProp('connectable');
 const connectionsLens = R.lensProp('connections');
 
-const addComponent = (state, component) => {
-    return R.over(componentsLens, R.append(component), state);
-}
+// Helpers
+const rectangle = ({ id, x, y, width, height }) => ({
+    id,
+    type: "rectangle",
+    x,
+    y,
+    width,
+    height
+});
 
-const rectangle = (action) => {
-    const { id, x, y, width, height } = action;
-    return {
-        id,
-        type: "rectangle",
-        x,
-        y,
-        width,
-        height
-    };
-};
-
-const ellipse = (action) => {
-    const { id, x, y, width, height } = action;
-    return {
-        id,
-        type: "ellipse",
-        x,
-        y,
-        width,
-        height
-    };
-};
+const ellipse = ({ id, x, y, width, height }) => ({
+    id,
+    type: "ellipse",
+    x,
+    y,
+    width,
+    height
+});
 
 const pipe = ({ id, points }) => ({
     id,
     type: 'pipe',
     points
 });
+
+const distanceSq = (p1, p2) => {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    return dx * dx + dy * dy;
+};
+
+const arePointsClose = (p1, p2, maxDistanceSq) => distanceSq(p1, p2) <= maxDistanceSq;
+
+const nearestRectanglePoint = (point, component) => ({
+    x: Math.max(component.x, Math.min(point.x, component.x + component.width)),
+    y: Math.max(component.y, Math.min(point.y, component.y + component.height))
+});
+
+const nearestComponentPoint = (point, component) => {
+    // @todo: add proper methods for pipes and ellipses
+    return nearestRectanglePoint(point, component);
+}
+
+const createConnection = (connectionPoint, action) => {
+    const { position, component } = connectionPoint;
+    const sx = (position.x - component.x) / component.width;
+    const sy = (position.y - component.y) / component.height;
+    return {
+        id: nextConnectionId++,
+        pipeId: action.id,
+        anchor: action.anchor,
+        componentId: component.id,
+        sx,
+        sy
+    };
+};
+
+const getConnectionPoint = (action, state) => {
+    return R.compose(
+        R.head,
+        R.filter(s => arePointsClose(s.position, action, CP_RADIUS_SQ)),
+        R.map(component => ({
+            component,
+            position: nearestComponentPoint(action, component)
+        })),
+        R.filter(c => R.contains(c.id, R.view(connectableLens, state))),
+        R.view(componentsLens)
+    )(state);
+};
+
+// Reducers
+const addComponent = (state, component) =>
+    R.over(componentsLens, R.append(component), state);
 
 const movePipeEnd = R.curry((action, state) => {
     const index = state.components.findIndex(c => c.id === action.id);
@@ -75,31 +115,33 @@ const moveComponent = (action, state) => {
     const component = R.view(componentLens)(state);
 
     if (component.type === 'pipe') {
-        return R.set(
-            componentLens,
-            {
-                ...component,
-                points: component.points.map(p => ({
-                    x: p.x + action.offsetX,
-                    y: p.y + action.offsetY
-                }))
-            },
-            state);
+        const movedPipe = {
+            ...component,
+            points: component.points.map(p => ({
+                x: p.x + action.offsetX,
+                y: p.y + action.offsetY
+            }))
+        };
+
+        return R.set(componentLens, movedPipe, state);
     }
 
-    const componentConnections = R.view(connectionsLens, state)
-        .filter(connection => connection.componentId === component.id);
-
-    const movedPipes = R.reduce((memo, connection) => {
+    const adjustPipeEnd = (memo, connection) => {
         const pipe = state.components.find(c => c.id === connection.pipeId);
         const pipeEnd = connection.anchor === 'start' ? pipe.points[0] : pipe.points[pipe.points.length - 1];
-
         return movePipeEnd({
             id: pipe.id,
+            anchor: connection.anchor,
             x: pipeEnd.x + action.offsetX,
             y: pipeEnd.y + action.offsetY
         }, memo);
-    }, state)(componentConnections);
+    };
+
+    const stateWithAdjustedPipes = R.compose(
+        R.reduce(adjustPipeEnd, state),
+        R.filter(c => c.componentId === component.id),
+        R.view(connectionsLens)
+    )(state);
 
     // move components and pipes connected to them
     return R.set(
@@ -109,7 +151,7 @@ const moveComponent = (action, state) => {
             x: component.x + action.offsetX,
             y: component.y + action.offsetY
         },
-        movedPipes);
+        stateWithAdjustedPipes);
 };
 
 const resizeComponent = (action, state) => {
@@ -124,6 +166,20 @@ const resizeComponent = (action, state) => {
         return state;
     }
 
+    const adjustPipeEnd = (memo, connection) =>
+        movePipeEnd({
+            id: connection.pipeId,
+            anchor: connection.anchor,
+            x: minX + width * connection.sx,
+            y: minY + height * connection.sy
+        }, memo);
+
+    const stateWithAdjustedPipes = R.compose(
+        R.reduce(adjustPipeEnd, state),
+        R.filter(c => c.componentId === component.id),
+        R.view(connectionsLens)
+    )(state)
+
     return R.set(
         componentLens,
         {
@@ -133,88 +189,34 @@ const resizeComponent = (action, state) => {
             width,
             height
         },
-        state);
+        stateWithAdjustedPipes);
 }
 
 const updateConnectable = R.curry((action, state) => {
-    const isClose = (component, action) =>
-        Math.abs(component.x + component.width / 2 - action.x) <= CONNECTABLE_AREA_RADIUS &&
-        Math.abs(component.y + component.height / 2 - action.y) <= CONNECTABLE_AREA_RADIUS;
-
     const connectable = R.compose(
         R.pluck('id'),
-        R.filter(c => c.id !== action.id && isClose(c, action)),
+        R.filter(c => arePointsClose(nearestComponentPoint(action, c), action, CONNECTABLE_AREA_RADIUS_SQ)),
+        R.filter(c => c.id !== action.id),
         R.view(componentsLens)
     )(state);
 
     return R.set(connectableLens, connectable, state);
 });
 
-const distanceSq = (p1, p2) => {
-    const dx = p2.x - p1.x;
-    const dy = p2.y - p1.y;
-    return dx * dx + dy * dy;
-};
-
-const nearestRectanglePoint = (point, component) => ({
-    x: Math.max(component.x, Math.min(point.x, component.x + component.width)),
-    y: Math.max(component.y, Math.min(point.y, component.y + component.height))
-});
-
-const nearestComponentPoint = (point, component) => {
-    switch (component.type) {
-        case 'rectangle':
-        case 'ellipse':
-            return nearestRectanglePoint(point, component);
-        default:
-            return nearestRectanglePoint(point, component);
-    }
-}
-
 const updateConnectionPoints = R.curry((action, state) => {
-    const getNearestPoint = R.curry((point, component) => {
-        const nearestPoint = nearestComponentPoint(point, component);
-        return {
-            component,
-            position: nearestPoint,
-            distance: distanceSq(nearestPoint, point)
-        };
-    })(action);
-
-    const createConnection = ({ component, position }) => {
-        const sx = (position.x - component.x) / component.width;
-        const sy = (position.y - component.y) / component.height;
-        return {
-            id: nextConnectionId++,
-            pipeId: action.id,
-            anchor: action.anchor,
-            componentId: component.id,
-            sx,
-            sy
-        };
-    };
-
-    const connectionPoint = R.compose(
-        R.head,
-        R.filter(s => s.distance < CP_RADIUS_SQ),
-        R.map(getNearestPoint),
-        R.filter(c => R.contains(c.id, R.view(connectableLens, state))),
-        R.view(componentsLens)
-    )(state);
-
-    if (!connectionPoint) {
-        return state;
-    }
-
-    const newConnection = createConnection(connectionPoint);
-    const updatedConnections = R.compose(
-        R.append(newConnection),
-        R.filter(c => c.pipeId !== action.id || c.componentId !== connectionPoint.component.id),
+    const connectionPoint = getConnectionPoint(action, state);
+    const filteredConnections = R.compose(
+        R.filter(c => c.pipeId !== action.id || c.anchor !== action.anchor),
         R.view(connectionsLens)
     )(state);
 
+    if (!connectionPoint) {
+        return R.set(connectionsLens, filteredConnections, state);
+    }
+
+    const newConnection = createConnection(connectionPoint, action);
     return R.compose(
-        R.set(connectionsLens, updatedConnections),
+        R.set(connectionsLens, R.append(newConnection, filteredConnections)),
         movePipeEnd({
             id: action.id,
             anchor: action.anchor,
