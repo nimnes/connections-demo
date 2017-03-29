@@ -4,6 +4,7 @@ let nextConnectionId = 1;
 
 const CONNECTABLE_AREA_RADIUS_SQ = 1000;
 const CP_RADIUS_SQ = 100;
+const SNAP_POINT_RADIUS_SQ = 200;
 
 const componentsLens = R.lensProp('components');
 const connectableLens = R.lensProp('connectable');
@@ -87,8 +88,34 @@ const createConnection = (connectionPoint, action) => {
     };
 };
 
+const getSnapPoints = ({ x, y, width, height, type }) => {
+    if (type !== 'pipe') {
+        return [
+            { x: x, y: y + height / 2 },
+            { x: x + width / 2, y: y },
+            { x: x + width, y: y + height / 2 },
+            { x: x + width / 2, y: y + height }
+        ];
+    }
+
+    return [];
+}
+
 const getConnectionPoint = (action, state) => {
+    const snapPoint = (connectionPoint) => {
+        if (!connectionPoint) {
+            return connectionPoint;
+        }
+
+        const snapPoint = getSnapPoints(connectionPoint.component)
+            .find(snapPoint => distanceSq(snapPoint, connectionPoint.position) < SNAP_POINT_RADIUS_SQ);
+
+        return snapPoint ?
+            R.set(R.lensProp('position'), {...snapPoint}, connectionPoint) : connectionPoint;
+    };
+
     return R.compose(
+        snapPoint,
         R.head,
         R.filter(s => arePointsClose(s.position, action, CP_RADIUS_SQ)),
         R.map(component => ({

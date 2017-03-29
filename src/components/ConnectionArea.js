@@ -24,7 +24,20 @@ const createRectangularArea = ({ x, y, width, height }) => (
     />
 );
 
-const ConnectionArea = ({ component }) => {
+const getSnapPoints = ({ x, y, width, height, type }) => {
+    if (type !== 'pipe') {
+        return [
+            { x: x, y: y + height / 2 },
+            { x: x + width / 2, y: y },
+            { x: x + width, y: y + height / 2 },
+            { x: x + width / 2, y: y + height }
+        ];
+    }
+
+    return [];
+}
+
+const getConnectionArea = (component) => {
     switch (component.type) {
         case 'ellipse':
             return createEllipseArea(component);
@@ -33,6 +46,30 @@ const ConnectionArea = ({ component }) => {
         default:
             return null;
     }
+}
+
+const ConnectionArea = ({ component }) => {
+    const snapPoints = getSnapPoints(component)
+        .map((point, index) => (
+            <ellipse
+                key={`snap-point-${component.id}-${index}`}
+                cx={point.x}
+                cy={point.y}
+                rx='3'
+                ry='3'
+                fill='#daf0dd'
+                stroke='#2c8437'
+            />
+        ));
+
+    const connectionArea = getConnectionArea(component);
+
+    return (
+        <g>
+            {connectionArea}
+            {snapPoints}
+        </g>
+    );
 }
 
 ConnectionArea.propTypes = {
